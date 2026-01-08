@@ -9,7 +9,17 @@
     "test:ui": "playwright test --ui",
     "test:chrome": "playwright test --project=chromium",
     "test:firefox": "playwright test --project=firefox",
-    "test:webkit": "playwright test --project=webkit"
+    "test:webkit": "playwright test --project=webkit",
+    "test:auth": "playwright test playwright/tests/auth/login.spec.ts",
+    "test:login-manual": "playwright test playwright/tests/auth/login-manual.spec.ts --headed --project=chromium",
+    "test:tickets": "playwright test playwright/tests/tickets --headed --project=chromium",
+    "test:subscription-1": "playwright test playwright/tests/tickets/daily-subscription-1-ticket.spec.ts --headed --project=chromium",
+    "test:subscription-5": "playwright test playwright/tests/tickets/daily-subscription-5-tickets.spec.ts --headed --project=chromium",
+    "test:on-demand": "playwright test playwright/tests/tickets/on-demand-purchase.spec.ts --headed --project=chromium",
+    "test:smoke": "playwright test playwright/tests/smoke",
+    "test:debug": "playwright test --debug",
+    "test:report": "playwright show-report",
+    "test:codegen": "playwright codegen https://mywin.lk"
   },
   "keywords": ["playwright", "automation", "testing"],
   "author": "",
