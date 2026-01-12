@@ -36,20 +36,31 @@ cp .env.example .env
 
 ```
 playwright/
+├── auth/
+│   └── auth.setup.ts               # Authentication setup (saves login state)
+├── .auth/
+│   └── user.json                   # Saved authentication state
 ├── tests/
 │   ├── auth/
-│   │   └── login.spec.ts           # Login functionality tests
+│   │   ├── login.spec.ts           # Login functionality tests
+│   │   └── login-manual.spec.ts    # Manual OTP login tests
 │   ├── tickets/
-│   │   └── take-ticket.spec.ts     # Ticket management tests
+│   │   └── ticket-purchase.spec.ts # Ticket purchase tests (TC1-TC6)
 │   └── smoke/
-│       └── basic-checks.spec.ts    # Smoke tests
+│       ├── basic-checks.spec.ts    # Basic smoke tests
+│       ├── basic-smoke.spec.ts     # Additional smoke tests
+│       └── mywin.spec.ts           # MyWin page accessibility test
 ├── fixtures/
 │   └── auth.fixture.ts             # Authentication fixtures
 ├── pages/
 │   ├── BasePage.ts                 # Base page class
+│   ├── HomePage.ts                 # Home page object
 │   ├── LoginPage.ts                # Login page object
+│   ├── OTPPage.ts                  # OTP page object
 │   ├── DashboardPage.ts            # Dashboard page object
-│   └── HomePage.ts                 # Home page object
+│   ├── LotteriesPage.ts            # Lotteries page object
+│   ├── MyAccountPage.ts            # My Account page object
+│   └── TicketPurchasePage.ts       # Ticket purchase page object
 ├── utils/
 │   ├── test-data.ts                # Test data and constants
 │   └── helpers.ts                  # Helper functions
@@ -58,35 +69,52 @@ playwright/
 
 ## 🧪 Running Tests
 
-### Run all tests:
+### Step 1: Run Auth Setup (Required First)
+This opens a browser where you manually enter the OTP. The auth state gets saved for subsequent tests.
 ```bash
-npm test
+npx playwright test --project=setup --headed
 ```
 
-### Run specific test suites:
+### Step 2: Run Smoke Tests
 ```bash
-npm run test:auth        # Run authentication tests
-npm run test:tickets     # Run ticket tests
-npm run test:smoke       # Run smoke tests
+npx playwright test playwright/tests/smoke/ --project=chromium
 ```
+
+### Step 3: Run Ticket Purchase Tests
+```bash
+npx playwright test playwright/tests/tickets/ticket-purchase.spec.ts --project=chromium --headed
+```
+
+### Step 4: Run All Tests (after auth is set up)
+```bash
+npx playwright test --project=chromium
+```
+
+### Alternative Commands (if npx doesn't work)
+Replace `npx playwright test` with:
+```bash
+node ./node_modules/@playwright/test/cli.js test
+```
+
+### Quick Reference
+| Test Type | Command |
+|-----------|---------|
+| Auth setup only | `npx playwright test --project=setup --headed` |
+| Smoke tests | `npx playwright test playwright/tests/smoke/ --project=chromium` |
+| Ticket tests | `npx playwright test playwright/tests/tickets/ --project=chromium --headed` |
+| All tests | `npx playwright test --project=chromium` |
+| View report | `npx playwright show-report` |
 
 ### Run tests in different modes:
 ```bash
-npm run test:headed      # Run with visible browser
-npm run test:ui          # Run with Playwright UI mode
-npm run test:debug       # Run in debug mode
-```
-
-### Run tests in specific browsers:
-```bash
-npm run test:chrome      # Run in Chromium
-npm run test:firefox     # Run in Firefox
-npm run test:webkit      # Run in WebKit (Safari)
+npx playwright test --headed      # Run with visible browser
+npx playwright test --ui          # Run with Playwright UI mode
+npx playwright test --debug       # Run in debug mode
 ```
 
 ### Generate test code:
 ```bash
-npm run test:codegen     # Open Playwright codegen tool
+npx playwright codegen            # Open Playwright codegen tool
 ```
 
 ## 📊 Test Reports
