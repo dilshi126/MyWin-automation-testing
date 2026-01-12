@@ -7,32 +7,25 @@ export class HomePage extends BasePage {
 
   constructor(page: Page) {
     super(page);
-    // Login button with exact class from MyWin.lk
     this.loginButton = page.locator('button.banner-log-btn');
-    // Language selection button
     this.englishLanguageButton = page.locator('span.ln-btn:has-text("English")');
   }
 
   async open() {
     await this.navigate('/');
     await this.waitForPageLoad();
-    // Handle language selection popup if it appears
     await this.selectLanguageIfNeeded();
   }
 
   async selectLanguageIfNeeded() {
     try {
-      // Check if language selection popup is visible
       const isLanguagePopupVisible = await this.englishLanguageButton.isVisible({ timeout: 3000 });
       if (isLanguagePopupVisible) {
-        console.log('Language selection popup detected, selecting English...');
         await this.englishLanguageButton.click();
-        await this.page.waitForTimeout(1000); // Wait for popup to close
-        console.log('✅ English language selected');
+        await this.page.waitForTimeout(1000);
       }
     } catch {
-      // Language popup not present, continue
-      console.log('No language popup detected');
+      // Language popup not present
     }
   }
 
