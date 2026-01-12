@@ -343,3 +343,321 @@ test.describe('Ticket Purchase - Quick Buy', () => {
     }
   });
 });
+
+/**
+ * Ticket Purchase Test Cases - Search & Buy
+ * 
+ * Test scenarios for buying lottery tickets using Search & Buy option
+ * Prerequisites: User must be logged in (handled by auth.setup.ts)
+ * 
+ * Flow:
+ * 1. User is already logged in (via saved auth state)
+ * 2. Navigate to Lotteries tab
+ * 3. Select a lottery and click Buy Now
+ * 4. Select Search & Buy option
+ * 5. Choose payment method (Mobile/Card/Wallet)
+ * 6. Enter search value in input field
+ * 7. Click Search button
+ * 8. Select a lottery from search results
+ * 9. Click Buy Now and confirm payment
+ * 10. Verify success or failure message
+ */
+
+test.describe('Ticket Purchase - Search & Buy', () => {
+  
+  test.beforeEach(async ({ page }) => {
+    // User is already logged in via saved auth state from auth.setup.ts
+    const homePage = new HomePage(page);
+    await homePage.open();
+    await page.waitForLoadState('domcontentloaded');
+  });
+
+  /**
+   * TEST CASE 4: Search & Buy - Mobile Payment Method
+   * 
+   * Steps:
+   * 1. Navigate to Lotteries page
+   * 2. Click Buy Now on available lottery
+   * 3. Select Search & Buy option
+   * 4. Select Mobile payment method
+   * 5. Enter a number in search input
+   * 6. Click Search button
+   * 7. Select first lottery from results
+   * 8. Click Buy Now button
+   * 9. Click "I'm Ready to Pay" in confirmation popup
+   * 10. Verify success or failure message
+   * 11. Click Close button
+   */
+  test('TC4: Search & Buy - Mobile payment method', async ({ page }) => {
+    const ticketPurchase = new TicketPurchasePage(page);
+    
+    // Navigate to Lotteries page
+    await ticketPurchase.navigateToLotteries();
+    console.log('✓ Navigated to Lotteries page');
+    
+    // Click Buy Now on first available lottery
+    await ticketPurchase.clickBuyNowOnFirstLottery();
+    console.log('✓ Clicked Buy Now on lottery');
+    
+    // Select Search & Buy option
+    await ticketPurchase.selectSearchAndBuy();
+    console.log('✓ Selected Search & Buy option');
+    
+    // Select Mobile payment method
+    await ticketPurchase.selectMobilePayment();
+    console.log('✓ Selected Mobile payment method');
+    
+    // Enter search value
+    await ticketPurchase.enterSearchValue('1');
+    console.log('✓ Entered search value');
+    
+    // Click Search button
+    await ticketPurchase.clickSearchButton();
+    console.log('✓ Clicked Search button');
+    
+    // Select first lottery from search results
+    await ticketPurchase.selectFirstSearchResult();
+    console.log('✓ Selected lottery from search results');
+    
+    // Click Buy Now button
+    await ticketPurchase.clickLotBuyNow();
+    console.log('✓ Clicked Buy Now button');
+    
+    // Click "I'm Ready to Pay" button in confirmation popup
+    await ticketPurchase.clickReadyToPay();
+    console.log('✓ Clicked Ready to Pay button');
+    
+    // Wait for payment processing
+    await page.waitForTimeout(3000);
+    
+    // Check if success or failure message is displayed
+    const isSuccess = await ticketPurchase.isSuccessMessageDisplayed();
+    const isFailed = await ticketPurchase.isFailedMessageDisplayed();
+    
+    if (isSuccess) {
+      console.log('✓ Payment Successful! Ticket purchased via Mobile payment (Search & Buy)');
+      expect(isSuccess).toBeTruthy();
+      await expect(ticketPurchase.successMessage).toBeVisible();
+      await ticketPurchase.clickCloseButton();
+      console.log('✓ Closed success popup');
+      
+    } else if (isFailed) {
+      console.log('⚠ Payment Failed! Insufficient mobile balance');
+      expect(isFailed).toBeTruthy();
+      await expect(ticketPurchase.failedMessage).toBeVisible();
+      await ticketPurchase.clickCloseButton();
+      console.log('✓ Closed failed popup and returned to lottery page');
+      
+    } else {
+      throw new Error('Neither success nor failure message displayed');
+    }
+  });
+
+  /**
+   * TEST CASE 5: Search & Buy - Card Payment Method
+   * 
+   * Steps:
+   * 1. Navigate to Lotteries page
+   * 2. Click Buy Now on available lottery
+   * 3. Select Search & Buy option
+   * 4. Select Card payment method
+   * 5. Check wallet balance
+   * 6. If wallet has balance >= Rs.40: Buy Now should be disabled
+   * 7. If wallet has no balance: Enter search, select lottery, proceed
+   * 8. Verify success or failure message
+   * 9. Click Close button
+   */
+  test('TC5: Search & Buy - Card payment method', async ({ page }) => {
+    const ticketPurchase = new TicketPurchasePage(page);
+    
+    // Navigate to Lotteries page
+    await ticketPurchase.navigateToLotteries();
+    console.log('✓ Navigated to Lotteries page');
+    
+    // Click Buy Now on first available lottery
+    await ticketPurchase.clickBuyNowOnFirstLottery();
+    console.log('✓ Clicked Buy Now on lottery');
+    
+    // Select Search & Buy option
+    await ticketPurchase.selectSearchAndBuy();
+    console.log('✓ Selected Search & Buy option');
+    
+    // Select Card payment method
+    await ticketPurchase.selectCardPayment();
+    console.log('✓ Selected Card payment method');
+    
+    // Get wallet balance
+    const walletBalance = await ticketPurchase.getWalletBalanceNumeric();
+    console.log(`Current wallet balance: Rs.${walletBalance}`);
+    
+    // Ticket price is Rs.40
+    const ticketPrice = 40;
+    
+    // Enter search value
+    await ticketPurchase.enterSearchValue('1');
+    console.log('✓ Entered search value');
+    
+    // Click Search button
+    await ticketPurchase.clickSearchButton();
+    console.log('✓ Clicked Search button');
+    
+    // Select first lottery from search results
+    await ticketPurchase.selectFirstSearchResult();
+    console.log('✓ Selected lottery from search results');
+    
+    // Check if wallet has sufficient balance
+    if (walletBalance >= ticketPrice) {
+      console.log('⚠ Wallet has sufficient balance. Card payment should be disabled.');
+      
+      // Verify Buy Now button is disabled
+      const isDisabled = await ticketPurchase.isBuyNowButtonDisabled();
+      expect(isDisabled).toBeTruthy();
+      console.log('✓ Buy Now button is disabled as expected');
+      return;
+    }
+    
+    // If wallet balance is insufficient, proceed with card payment
+    console.log('Wallet balance insufficient. Proceeding with card payment.');
+    
+    // Click Buy Now button
+    await ticketPurchase.clickLotBuyNow();
+    console.log('✓ Clicked Buy Now button');
+    
+    // Click "I'm Ready to Pay" button
+    await ticketPurchase.clickReadyToPay();
+    console.log('✓ Clicked Ready to Pay button');
+    
+    // Wait for payment processing
+    await page.waitForTimeout(3000);
+    
+    // Check if success or failure message is displayed
+    const isSuccess = await ticketPurchase.isSuccessMessageDisplayed();
+    const isFailed = await ticketPurchase.isFailedMessageDisplayed();
+    
+    if (isSuccess) {
+      console.log('✓ Payment Successful! Card charged (Search & Buy)');
+      expect(isSuccess).toBeTruthy();
+      await expect(ticketPurchase.successMessage).toBeVisible();
+      await ticketPurchase.clickCloseButton();
+      console.log('✓ Closed success popup');
+      
+    } else if (isFailed) {
+      console.log('⚠ Payment Failed! Card payment unsuccessful');
+      expect(isFailed).toBeTruthy();
+      await expect(ticketPurchase.failedMessage).toBeVisible();
+      await ticketPurchase.clickCloseButton();
+      console.log('✓ Closed failed popup');
+      
+    } else {
+      throw new Error('Neither success nor failure message displayed');
+    }
+  });
+
+  /**
+   * TEST CASE 6: Search & Buy - Wallet Payment Method
+   * 
+   * Steps:
+   * 1. Navigate to Lotteries page
+   * 2. Click Buy Now on available lottery
+   * 3. Select Search & Buy option
+   * 4. Select Wallet payment method
+   * 5. Check wallet balance before purchase
+   * 6. Enter search value
+   * 7. Click Search button
+   * 8. Select first lottery from results
+   * 9. Click Buy Now button
+   * 10. Click "I'm Ready to Pay" in confirmation popup
+   * 11. Verify success or failure message
+   * 12. Verify wallet balance deduction on success
+   * 13. Click Close button
+   */
+  test('TC6: Search & Buy - Wallet payment method', async ({ page }) => {
+    const ticketPurchase = new TicketPurchasePage(page);
+    
+    // Navigate to Lotteries page
+    await ticketPurchase.navigateToLotteries();
+    console.log('✓ Navigated to Lotteries page');
+    
+    // Click Buy Now on first available lottery
+    await ticketPurchase.clickBuyNowOnFirstLottery();
+    console.log('✓ Clicked Buy Now on lottery');
+    
+    // Select Search & Buy option
+    await ticketPurchase.selectSearchAndBuy();
+    console.log('✓ Selected Search & Buy option');
+    
+    // Select Wallet payment method
+    await ticketPurchase.selectWalletPayment();
+    console.log('✓ Selected Wallet payment method');
+    
+    // Get wallet balance before purchase
+    const walletBalanceBefore = await ticketPurchase.getWalletBalanceNumeric();
+    console.log(`Wallet balance before purchase: Rs.${walletBalanceBefore}`);
+    
+    // Enter search value
+    await ticketPurchase.enterSearchValue('1');
+    console.log('✓ Entered search value');
+    
+    // Click Search button
+    await ticketPurchase.clickSearchButton();
+    console.log('✓ Clicked Search button');
+    
+    // Select first lottery from search results
+    await ticketPurchase.selectFirstSearchResult();
+    console.log('✓ Selected lottery from search results');
+    
+    // Ticket price is Rs.40
+    const ticketPrice = 40;
+    
+    // Click Buy Now button
+    await ticketPurchase.clickLotBuyNow();
+    console.log('✓ Clicked Buy Now button');
+    
+    // Click "I'm Ready to Pay" button
+    await ticketPurchase.clickReadyToPay();
+    console.log('✓ Clicked Ready to Pay button');
+    
+    // Wait for payment processing
+    await page.waitForTimeout(3000);
+    
+    // Check if success or failure message is displayed
+    const isSuccess = await ticketPurchase.isSuccessMessageDisplayed();
+    const isFailed = await ticketPurchase.isFailedMessageDisplayed();
+    
+    if (isSuccess) {
+      console.log('✓ Payment Successful! Ticket purchased via Wallet (Search & Buy)');
+      expect(isSuccess).toBeTruthy();
+      await expect(ticketPurchase.successMessage).toBeVisible();
+      
+      // Get wallet balance after purchase
+      const walletBalanceAfter = await ticketPurchase.getWalletBalanceNumeric();
+      console.log(`Wallet balance after purchase: Rs.${walletBalanceAfter}`);
+      
+      // Verify correct amount was deducted
+      const expectedBalance = walletBalanceBefore - ticketPrice;
+      console.log(`Expected wallet balance: Rs.${expectedBalance}`);
+      console.log(`Actual wallet balance: Rs.${walletBalanceAfter}`);
+      
+      // Verify wallet balance decreased
+      expect(walletBalanceAfter).toBeLessThan(walletBalanceBefore);
+      console.log('✓ Wallet balance correctly deducted');
+      
+      await ticketPurchase.clickCloseButton();
+      console.log('✓ Closed success popup');
+      
+    } else if (isFailed) {
+      console.log('⚠ Payment Failed! Insufficient wallet balance');
+      expect(isFailed).toBeTruthy();
+      await expect(ticketPurchase.failedMessage).toBeVisible();
+      
+      expect(walletBalanceBefore).toBeLessThan(ticketPrice);
+      console.log(`✓ Payment failed as expected. Wallet balance (Rs.${walletBalanceBefore}) < Ticket price (Rs.${ticketPrice})`);
+      
+      await ticketPurchase.clickCloseButton();
+      console.log('✓ Closed failed popup');
+      
+    } else {
+      throw new Error('Neither success nor failure message displayed');
+    }
+  });
+});

@@ -38,6 +38,11 @@ export class TicketPurchasePage extends BasePage {
   // Wallet Balance
   readonly walletBalance: Locator;
 
+  // Search & Buy Elements
+  readonly searchInput: Locator;
+  readonly searchButton: Locator;
+  readonly searchResultSelectButton: Locator;
+
   constructor(page: Page) {
     super(page);
     
@@ -76,6 +81,11 @@ export class TicketPurchasePage extends BasePage {
     
     // Wallet Balance
     this.walletBalance = page.locator('.wallet-balance-lg');
+
+    // Search & Buy Elements
+    this.searchInput = page.locator('input.lucky-number-input').first();
+    this.searchButton = page.locator('button.lucky-number-search-btn');
+    this.searchResultSelectButton = page.locator('button.lucky-number-span-select-btn');
   }
 
   /**
@@ -269,5 +279,77 @@ export class TicketPurchasePage extends BasePage {
     await this.selectTicketQuantity(ticketQuantity);
     await this.clickLotBuyNow();
     await this.clickReadyToPay();
+  }
+
+  // ==================== Search & Buy Methods ====================
+
+  /**
+   * Select Search & Buy option
+   */
+  async selectSearchAndBuy(): Promise<void> {
+    await this.searchBuyButton.waitFor({ state: 'visible', timeout: 15000 });
+    await this.searchBuyButton.click();
+    await this.page.waitForTimeout(1000); // Wait for UI transition
+    console.log('✓ Selected Search & Buy option');
+  }
+
+  /**
+   * Enter search value in the search input field
+   */
+  async enterSearchValue(value: string): Promise<void> {
+    await this.searchInput.waitFor({ state: 'visible', timeout: 10000 });
+    await this.searchInput.fill(value);
+    await this.page.waitForTimeout(500);
+    console.log(`✓ Entered search value: ${value}`);
+  }
+
+  /**
+   * Click the search button
+   */
+  async clickSearchButton(): Promise<void> {
+    await this.searchButton.first().click();
+    await this.page.waitForTimeout(2000); // Wait for search results
+    console.log('✓ Clicked Search button');
+  }
+
+  /**
+   * Select first lottery from search results
+   */
+  async selectFirstSearchResult(): Promise<void> {
+    await this.searchResultSelectButton.first().waitFor({ state: 'visible', timeout: 10000 });
+    await this.searchResultSelectButton.first().click();
+    await this.page.waitForTimeout(1000);
+    console.log('✓ Selected first lottery from search results');
+  }
+
+  /**
+   * Complete Search & Buy flow
+   */
+  async completeSearchAndBuyFlow(
+    paymentMethod: 'mobile' | 'card' | 'wallet',
+    searchValue: string = '1'
+  ): Promise<void> {
+    // Select Search & Buy option
+    await this.selectSearchAndBuy();
+    
+    // Select payment method first
+    switch(paymentMethod) {
+      case 'mobile':
+        await this.selectMobilePayment();
+        break;
+      case 'card':
+        await this.selectCardPayment();
+        break;
+      case 'wallet':
+        await this.selectWalletPayment();
+        break;
+    }
+    
+    // Enter search value and search
+    await this.enterSearchValue(searchValue);
+    await this.clickSearchButton();
+    
+    // Select first result
+    await this.selectFirstSearchResult();
   }
 }
