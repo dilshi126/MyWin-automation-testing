@@ -49,21 +49,21 @@ export class TicketPurchasePage extends BasePage {
     this.buyNowButton = page.locator('button.buy-btn:has-text("Buy Now")');
     this.subscribeNowButton = page.locator('button.sub-btn:has-text("Subscribe Now")');
     
-    // Purchase Options
-    this.quickBuyButton = page.locator('button.buy-switch-btn:has-text("Quick Buy")');
-    this.searchBuyButton = page.locator('button.buy-switch-btn:has-text("Search & Buy")');
+    // Purchase Options - using more specific locators
+    this.quickBuyButton = page.locator('button.buy-switch-btn').filter({ hasText: 'Quick Buy' });
+    this.searchBuyButton = page.locator('button.buy-switch-btn').filter({ hasText: 'Search & Buy' });
     
     // Payment Methods
     this.mobilePaymentButton = page.locator('button.buy-switch-btn:has-text("Mobile")');
     this.cardPaymentButton = page.locator('button.buy-switch-btn:has-text("Card")');
     this.walletPaymentButton = page.locator('button.buy-switch-btn:has-text("Wallet")');
     
-    // Ticket Quantity Selectors
-    this.ticketQuantity1 = page.locator('span.buy-select-btn:has-text("1")');
-    this.ticketQuantity2 = page.locator('span.buy-select-btn:has-text("2")');
-    this.ticketQuantity3 = page.locator('span.buy-select-btn:has-text("3")');
-    this.ticketQuantity4 = page.locator('span.buy-select-btn:has-text("4")');
-    this.ticketQuantity5 = page.locator('span.buy-select-btn:has-text("5")');
+    // Ticket Quantity Selectors - using exact match
+    this.ticketQuantity1 = page.locator('span.buy-select-btn').filter({ hasText: /^1$/ });
+    this.ticketQuantity2 = page.locator('span.buy-select-btn').filter({ hasText: /^2$/ });
+    this.ticketQuantity3 = page.locator('span.buy-select-btn').filter({ hasText: /^3$/ });
+    this.ticketQuantity4 = page.locator('span.buy-select-btn').filter({ hasText: /^4$/ });
+    this.ticketQuantity5 = page.locator('span.buy-select-btn').filter({ hasText: /^5$/ });
     
     // Purchase Actions
     this.lotBuyNowButton = page.locator('button.lot-buy-now-btn:has-text("Buy Now")');
@@ -83,23 +83,48 @@ export class TicketPurchasePage extends BasePage {
    */
   async navigateToLotteries(): Promise<void> {
     await this.lotteriesNavTab.click();
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState('domcontentloaded');
+    await this.page.waitForTimeout(2000); // Wait for lottery cards to load
   }
 
   /**
    * Click Buy Now on first available lottery
    */
   async clickBuyNowOnFirstLottery(): Promise<void> {
-    await this.buyNowButton.first().click();
-    await this.page.waitForLoadState('networkidle');
+    // Wait for page to load
+    await this.page.waitForTimeout(3000);
+    
+    // Find the first lottery card and hover over it to reveal Buy Now button
+    const lotteryCards = this.page.locator('.carousel-card');
+    const firstCard = lotteryCards.first();
+    
+    // Wait for card to be visible
+    await firstCard.waitFor({ state: 'visible', timeout: 15000 });
+    
+    // Hover over the card to reveal Buy Now button
+    await firstCard.hover();
+    await this.page.waitForTimeout(1000);
+    
+    // Now find and click the Buy Now button within this card
+    const buyButton = firstCard.locator('button.buy-btn');
+    await buyButton.waitFor({ state: 'visible', timeout: 5000 });
+    await buyButton.click();
+    
+    console.log('✓ Clicked Buy Now on lottery');
+    
+    // Wait for navigation to MyWin page
+    await this.page.waitForLoadState('domcontentloaded');
+    await this.page.waitForTimeout(3000); // Wait for page to fully render
   }
 
   /**
    * Select Quick Buy option
    */
   async selectQuickBuy(): Promise<void> {
+    // Wait for the Quick Buy button to be visible
+    await this.quickBuyButton.waitFor({ state: 'visible', timeout: 15000 });
     await this.quickBuyButton.click();
-    await this.page.waitForTimeout(500); // Wait for UI transition
+    await this.page.waitForTimeout(1000); // Wait for UI transition
   }
 
   /**

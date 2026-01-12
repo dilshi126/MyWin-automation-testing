@@ -1,18 +1,15 @@
 import { test, expect } from '@playwright/test';
 import { HomePage } from '../../pages/HomePage';
-import { LoginPage } from '../../pages/LoginPage';
-import { OTPPage } from '../../pages/OTPPage';
 import { TicketPurchasePage } from '../../pages/TicketPurchasePage';
-import { TestData } from '../../utils/test-data';
 
 /**
  * Ticket Purchase Test Cases - Quick Buy
  * 
  * Test scenarios for buying lottery tickets using Quick Buy option
- * Prerequisites: User must be logged in with valid credentials
+ * Prerequisites: User must be logged in (handled by auth.setup.ts)
  * 
  * Flow:
- * 1. User logs in successfully
+ * 1. User is already logged in (via saved auth state)
  * 2. Navigate to Lotteries tab
  * 3. Select a lottery and click Buy Now
  * 4. Select Quick Buy option
@@ -20,23 +17,18 @@ import { TestData } from '../../utils/test-data';
  * 6. Select ticket quantity
  * 7. Click Buy Now and confirm payment
  * 8. Verify success or failure message
+ * 
+ * Run with: npx playwright test ticket-purchase.spec.ts --project=chromium --headed
  */
 
 test.describe('Ticket Purchase - Quick Buy', () => {
   
   test.beforeEach(async ({ page }) => {
-    // Setup: User must be logged in before each test
-    // NOTE: This assumes user is already logged in or you have auth state saved
-    // If not, you'll need to implement login flow here
+    // User is already logged in via saved auth state from auth.setup.ts
+    // Just navigate to home page
     const homePage = new HomePage(page);
     await homePage.open();
-    
-    // TODO: Add login flow if needed
-    // const loginPage = new LoginPage(page);
-    // await homePage.clickLoginButton();
-    // await loginPage.sendVerificationCode(TestData.users.validUser.phoneNumber);
-    // const otpPage = new OTPPage(page);
-    // await otpPage.submitOTP(TestData.users.validUser.otp);
+    await page.waitForLoadState('domcontentloaded');
   });
 
   /**
